@@ -1,0 +1,38 @@
+ if(AD_Value1 < 10) AD_Value1 = 0;
+    if(AD_Value2 < 10) AD_Value2 = 0;
+    if(AD_Value3 < 10) AD_Value3 = 0;
+   
+   if(Gyro > 4090) Gyro += 1000;    ///这些1000，,500是什么数据？
+   else
+   if(Gyro > 4084) Gyro += 500;
+   
+   if(Gyro < 55)   Gyro -= 1000;
+   else
+   if(Gyro < 60)   Gyro -= 500;
+       
+    Acc_x = Acc_x - 2042.0;
+    Acc_z = Acc_z - 2076.0;
+    Gyro  = Gyro  - 2000.0;
+    Gyro_Data = Gyro;
+    
+    OutData[2] =  Gyro_Data;
+    accelerometer_angle = atan2f(Acc_x,Acc_z);  //角加速度
+
+    OutData[0] = accelerometer_angle*100; //
+    gyroscope_rate = Gyro*0.0095;        //重力加速度
+    
+    NowData = RealData + gyroscope_rate*0.005;// X(k|k-1)=A X(k-1|k-1)+B U(k)  ; A=1,B=0.005, U(k)=gyroscope_rate, 
+                                             //  X(k-1|k-1)=RealData,     NowData= X(k|k-1)
+    NowData_P = sqrt(Q*Q+RealData_P*RealData_P); //P(k|k-1)=A P(k-1|k-1) A’+Q  ; P(k|k-1)= NowData_P
+                                                 //RealData_P=P(k-1|k-1);为什么要开方和相乘？？？
+    Kg = sqrt(NowData_P*NowData_P/(NowData_P*NowData_P+R*R)); //Kg(k)= P(k|k-1) H’ / (H P(k|k-1) H’ + R);增益;
+                                                              //这里又为什么要开方和R*R？？？
+    RealData = NowData + Kg*(accelerometer_angle - NowData); //X(k|k)= X(k|k-1)+Kg(k) (Z(k)-H X(k|k-1))
+    RealData_P = sqrt((1-Kg)*NowData_P*NowData_P);  // P(k|k)=（I-Kg(k) H）P(k|k-1)
+                                                    //这里为什么开方？？
+    
+    QingJiao =  RealData;
+       
+    QingJiao = RealData - 0.9;  //输出俯仰角和翻滚角？？？
+    OutData[1] = QingJiao*1000; 
+    OutPut_Data();
